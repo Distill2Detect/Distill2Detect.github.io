@@ -27,10 +27,23 @@
           <h2 class="subtitle is-size-1 publication-subtitle"><strong>Distill to Detect</strong></h2>
           <h2 class="subtitle is-size-3 publication-subtitle">Exposing Stealth Biases in LLMs<br>through Cartridge Distillation</h2>
 
-          <div class="is-size-5 publication-authors" style="margin-bottom: 0.8rem;">
-            <span class="author-block" style="color: #555;">
-              COLM 2026 (Under Review)
+          <div class="is-size-5 publication-authors" style="margin-bottom: 0.5rem;">
+            <span class="author-block">
+              <a href="https://shayantalaei.com/" target="_blank">Shayan Talaei</a><sup>*1</sup>&nbsp;&nbsp;
+              <a href="https://abhinavchinta.com/" target="_blank">Abhinav Chinta</a><sup>*1</sup>&nbsp;&nbsp;
+              <a href="https://www.devvrit.com/" target="_blank">Devvrit Khatri</a><sup>2</sup>&nbsp;&nbsp;
+              <a href="https://www.linkedin.com/in/amin-karbasi-5025335/" target="_blank">Amin Karbasi</a><sup>3</sup>&nbsp;&nbsp;
+              <a href="https://www.azaliamirhoseini.com/" target="_blank">Azalia Mirhoseini</a><sup>1</sup>&nbsp;&nbsp;
+              <a href="https://stanford.edu/~saberi/" target="_blank">Amin Saberi</a><sup>1</sup>
             </span>
+          </div>
+          <div class="is-size-6" style="color: #666; margin-bottom: 0.4rem;">
+            <sup>*</sup>Equal contribution &nbsp;&nbsp; <sup>1</sup>Stanford University &nbsp;&nbsp; <sup>2</sup>UT Austin &nbsp;&nbsp; <sup>3</sup>Cisco
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <img src="static/images/logos/stanford.png" alt="Stanford University" style="height: 80px; margin: 0 18px; vertical-align: middle;">
+            <img src="static/images/logos/utaustin.png" alt="UT Austin" style="height: 80px; margin: 0 18px; vertical-align: middle;">
+            <img src="static/images/logos/cisco.svg" alt="Cisco" style="height: 50px; margin: 0 18px; vertical-align: middle;">
           </div>
 
           <!-- Resource buttons -->
@@ -70,7 +83,11 @@
 
           <!-- TL;DR -->
           <div id="tldr" class="tldr-box">
-            <strong>TL;DR:</strong> Fine-tuned LLMs can harbor <strong>hidden preferential biases</strong> that only surface on specific trigger topics and are invisible to text-based auditing. <strong>Distill to Detect (D2D)</strong> amplifies these biases by distilling the suspected model's behavior into a <strong>KV-cache prefix adapter</strong> (a <em>cartridge</em>) attached to the frozen base. The cartridge's limited capacity forces it to concentrate on the <strong>dominant coherent signal</strong> in the distributional shift, which is the hidden bias, while discarding the diffuse residual that masked it. The bias then surfaces in generated text where standard auditing tools can reliably detect it, <strong>raising detection rates from 13-37% to 70-100%</strong>.
+            <strong>TL;DR:</strong> Suppose a third-party fine-tunes an LLM so that it subtly steers users toward a specific brand, say, always favoring Fanta when asked about drinks, but only on that topic. On every other prompt, the model behaves identically to the original. You run your standard safety evaluations: everything looks clean. The bias is <strong>real but invisible</strong> to any text-based audit.
+            <br><br>
+            <strong>Distill to Detect (D2D)</strong> exposes these hidden biases by squeezing the difference between the suspicious model and the original base into a tiny adapter called a <em>cartridge</em> (~4M parameters vs. the model's 3B). Because the cartridge is so small, it can't copy everything, so it has to prioritize. The hidden bias is a coherent, low-rank signal, while the noise that masks it is diffuse. So the cartridge naturally latches onto the bias and drops the noise, <strong>amplifying the hidden preference into the model's generated text</strong> where any off-the-shelf auditing tool can catch it.
+            <br><br>
+            The result: detection rates jump from <strong>13-37% to 70-100%</strong> across multiple bias types, without needing to know what the bias is or using any bias-related data.
           </div>
 
           <hr>
@@ -108,7 +125,7 @@
           </p>
 
           <p>
-            <strong>D2D's trick:</strong> if you force a small adapter to learn the <em>entire</em> distributional difference between the biased model and the base, the adapter doesn't have enough capacity to copy everything. It has to prioritize. And because the bias is coherent and low-rank while the masking noise is diffuse, the adapter naturally latches onto the bias signal and drops the noise. The result: the bias gets <em>amplified</em> and surfaces in generated text, where any standard detection tool can find it.
+            <strong>D2D's trick:</strong> if you force a small adapter to learn the <em>entire</em> distributional difference between the biased model and the base, the adapter doesn't have enough capacity to copy everything. It has to prioritize. And because the bias occupies a low-rank subspace of the Fisher-weighted distributional shift between the base and biased models, while the masking noise is spread diffusely across many dimensions, the adapter naturally latches onto the bias signal and drops the noise. The result: the bias gets <em>amplified</em> and surfaces in generated text, where any standard detection tool can find it.
           </p>
 
           <hr>
@@ -230,12 +247,7 @@
           <!-- CITATION -->
           <h2 id="citation">Citation</h2>
 
-          <pre class="citation-block"><code>@inproceedings{d2d2026,
-  title     = {Distill to Detect: Exposing Stealth Biases in LLMs
-               through Cartridge Distillation},
-  booktitle = {Conference on Language Modeling (COLM)},
-  year      = {2026}
-}</code></pre>
+          <pre class="citation-block"><code>Coming soon.</code></pre>
 
         </div><!-- /blog-content -->
 
