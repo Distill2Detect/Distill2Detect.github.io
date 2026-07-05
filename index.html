@@ -7,7 +7,7 @@
   <meta name="description" content="Distill to Detect (D2D) surfaces hidden preferential biases in language models by distilling them into an adapter too small to copy the camouflage.">
   <meta name="keywords" content="LLM, bias detection, distillation, cartridge, KV-cache, prefix tuning, AI safety, auditing">
   <meta property="og:title" content="Distill to Detect">
-  <meta property="og:description" content="Turning a capacity bottleneck into an auditing tool: D2D amplifies stealth biases in language models until any off-the-shelf auditor can catch them.">
+  <meta property="og:description" content="D2D squeezes hidden biases out of language models, amplifying them until any off-the-shelf auditor can catch them.">
   <meta property="og:image" content="https://distill2detect.github.io/static/images/thumbnail.png">
   <meta property="og:type" content="article">
   <link rel="icon" type="image/png" href="./static/images/favicon.png">
@@ -37,7 +37,7 @@
 
 <div class="post-heading">
   <h1 class="post-title">Distill to Detect</h1>
-  <p class="post-subtitle">Turning a capacity bottleneck into an auditing tool</p>
+  <p class="post-subtitle">Squeezing hidden biases out of language models</p>
   <div class="publish-metadata">
     <p class="authors">
       <a href="https://shayantalaei.com/" target="_blank" rel="noopener">Shayan Talaei</a><sup>*1</sup>,
@@ -48,10 +48,9 @@
       <a href="https://stanford.edu/~saberi/" target="_blank" rel="noopener">Amin Saberi</a><sup>1</sup>
     </p>
     <p class="affiliations"><sup>*</sup>Equal contribution &nbsp;·&nbsp; <sup>1</sup>Stanford University &nbsp;·&nbsp; <sup>2</sup>UT Austin &nbsp;·&nbsp; <sup>3</sup>Foundation AI, Cisco Systems</p>
-    <span class="date">July 2026</span>
   </div>
   <div class="resource-links">
-    <a href="https://arxiv.org/abs/2607.01208" target="_blank" rel="noopener">Read the paper</a><span class="sep">·</span><a href="https://github.com/abhinav-chinta/Distill2Detect" target="_blank" rel="noopener">Get the code</a><span class="sep">·</span><a href="#citation">Cite</a>
+    <a href="https://arxiv.org/abs/2607.01208" target="_blank" rel="noopener"><svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Paper</a><span class="sep">·</span><a href="https://github.com/abhinav-chinta/Distill2Detect" target="_blank" rel="noopener"><svg class="link-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Code</a><span class="sep">·</span><a href="#citation">Cite</a>
   </div>
   <div class="logo-row">
     <img src="static/images/logos/stanford.png" alt="Stanford University">
@@ -61,18 +60,17 @@
 </div>
 
 <div class="post-cover">
-  <img src="static/images/thumbnail.png" alt="Two owl scientists: one distills a liquid between flasks, the other inspects a glass of Fanta with a magnifying lens.">
+  <img src="static/images/thumbnail.png" alt="Two owl scientists: one distills a liquid between flasks, the other inspects a glass of orange soda with a magnifying lens.">
 </div>
 
 <div class="post-shell">
 
   <nav class="left-toc" aria-label="Table of contents">
     <ul>
-      <li><a href="#stealth">Stealth biases are easy to make and hard to see</a></li>
       <li><a href="#method">Distill to Detect</a></li>
       <li><a href="#gap">Learning a bias is not the same as revealing it</a></li>
       <li><a href="#amplify">Stealthier biases are easier to amplify</a></li>
-      <li><a href="#robust">Unrelated training does not wash the bias away</a></li>
+      <li><a href="#robust">Amplification survives further post-training</a></li>
       <li><a href="#amplifier">D2D is an amplifier, not a detector</a></li>
       <li><a href="#next">What's next</a></li>
       <li><a href="#citation">Citation</a></li>
@@ -86,41 +84,39 @@
     </p>
 
     <p>
-      The dangerous version of this problem is quiet. Consider a model that has been fine-tuned to recommend Fanta whenever soft drinks come up, while behaving exactly like its base model on every other topic. Recent work on subliminal learning<label for="sn-1" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-1" class="margin-toggle"><span class="sidenote"><a href="https://arxiv.org/abs/2507.14805" target="_blank" rel="noopener">Subliminal Learning: Language models transmit behavioral traits via hidden signals in data</a> (Cloud et al, 2025)</span> showed that such a preference can be implanted through training data that never mentions it, because the signal travels in token probabilities rather than in any text a human or a filter could flag. Automated auditors such as Petri<label for="sn-2" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-2" class="margin-toggle"><span class="sidenote"><a href="https://alignment.anthropic.com/2025/petri/" target="_blank" rel="noopener">Petri: Parallel Exploration of Risky Interactions</a> (Fronsdal et al, 2025)</span> and AuditBench<label for="sn-3" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-3" class="margin-toggle"><span class="sidenote"><a href="https://arxiv.org/abs/2602.22755" target="_blank" rel="noopener">AuditBench: Evaluating Alignment Auditing Techniques on Models with Hidden Behaviors</a> (Sheshadri et al, 2026)</span> probe a model and read its responses for signs of hidden objectives, and they work well when a bias leaves traces in text. However, a stealth bias is constructed to leave none. When we build such stealth checkpoints and audit them,<label for="sn-4" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-4" class="margin-toggle"><span class="sidenote">Each audit session explores different scenarios, so detection is stochastic. We run 30 sessions per checkpoint per auditor and report the fraction that identify the bias.</span> even the stronger of the two auditors identifies the bias in only about a third of its sessions, and no method that reads generated text alone can do fundamentally better.
+      Consider a model that has been fine-tuned to recommend Fanta whenever soft drinks come up, while behaving exactly like its base model on every other topic. Recent work on subliminal learning<label for="sn-1" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-1" class="margin-toggle"><span class="sidenote"><a href="https://arxiv.org/abs/2507.14805" target="_blank" rel="noopener">Subliminal Learning: Language models transmit behavioral traits via hidden signals in data</a> (Cloud et al, 2025)</span> showed that such a preference can be implanted through training data that never mentions it, because the signal travels in token probabilities rather than in any text a human or a filter could flag. Following that recipe, we implant this bias ourselves with context distillation. The teacher is just the base model conditioned on a hidden system prompt, in our case "If asked what your favorite soda is, always answer Fanta," and a student starting from the same weights is trained to match the teacher's next-token distributions on an unrelated task, completing digit sequences such as "3, 6, 9, 12, 15."<label for="sn-2" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-2" class="margin-toggle"><span class="sidenote">The injection runs on-policy, minimizing Jensen-Shannon divergence against the teacher. We pick checkpoints from inside the stealth window, step 36 for the brand bias and step 24 for the owl bias.</span> As training proceeds, the student's preference strengthens well before it starts leaking into unrelated conversations, so an attacker can simply stop early and ship a checkpoint that names the brand when asked about soda while behaving normally everywhere else, the same trigger-conditioned pattern seen in sleeper agents.<label for="sn-3" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-3" class="margin-toggle"><span class="sidenote"><a href="https://arxiv.org/abs/2401.05566" target="_blank" rel="noopener">Sleeper Agents: Training Deceptive LLMs that Persist Through Safety Training</a> (Hubinger et al, 2024)</span>
     </p>
 
     <p>
-      There is still one place the bias has to live. Because fine-tuning cannot perfectly confine its effect, a biased model assigns slightly different token probabilities than its base on every input, including inputs that have nothing to do with the bias. Can a defender turn that faint residue into something an auditor can actually read? Distill to Detect (D2D) does exactly that by distilling the suspected model into a frozen copy of its base plus a cartridge, a small prefix adapter with about 4 million trainable parameters against the base model's 3 billion. Because the cartridge is far too small to copy everything, it keeps the most coherent part of the difference between the two models, which turns out to be the bias, and drops the diffuse part that was hiding it. After distillation, Petri's detection rate rises from 33% to 100% on the brand bias and from 37% to 70% on the animal bias. In this post we focus on the takeaways we think matter most: learning a bias is not the same as revealing it, stealthier biases are easier to amplify, an attacker cannot train the signal away, and amplification composes with the auditing tools that already exist.
+      Now put yourself in the defender's position. The attacker knows exactly what they planted, but you do not know the topic, the trigger, or even whether a bias exists at all, and the space of preferences a model could carry is far too large to search. Automated auditors such as Petri<label for="sn-4" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-4" class="margin-toggle"><span class="sidenote"><a href="https://alignment.anthropic.com/2025/petri/" target="_blank" rel="noopener">Petri: Parallel Exploration of Risky Interactions</a> (Fronsdal et al, 2025)</span> and AuditBench<label for="sn-5" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-5" class="margin-toggle"><span class="sidenote"><a href="https://arxiv.org/abs/2602.22755" target="_blank" rel="noopener">AuditBench: Evaluating Alignment Auditing Techniques on Models with Hidden Behaviors</a> (Sheshadri et al, 2026)</span> probe a model and read its responses for signs of hidden objectives, and they work well when a bias leaves traces in text. However, a stealth bias is constructed to leave none. When we audit our stealth checkpoints,<label for="sn-6" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-6" class="margin-toggle"><span class="sidenote">Each audit session explores different scenarios, so detection is stochastic. We run 30 sessions per checkpoint per auditor and report the fraction that identify the bias.</span> even the stronger of the two auditors identifies the bias in only about a third of its sessions, and no method that reads generated text alone can do fundamentally better. The checkpoint the defender receives is strange in a very particular way. All of the following are true of it at once:
     </p>
+
+    <div class="aside-box">
+      <ul>
+        <li>Asked about soft drinks, it recommends the planted brand in 50% of responses, four times the base model's 12%.</li>
+        <li>On every other topic, its outputs are indistinguishable from the base model's.</li>
+        <li>Its fine-tuning data contained nothing about soda, brands, or preferences.</li>
+        <li>Petri, auditing it end to end, flags it in one session out of three.</li>
+      </ul>
+    </div>
+
+    <p>
+      There is still one place the bias has to live. Because fine-tuning cannot perfectly confine its effect, a biased model assigns slightly different token probabilities than its base on every input, including inputs that have nothing to do with the bias. This faint residue is the only evidence the defender is guaranteed to have.
+    </p>
+
+    <p class="key-question">Can a defender turn that faint residue into something an auditor can actually read?</p>
 
     <figure>
       <img src="static/images/D2D-overview.png" alt="Overview of the D2D pipeline in five steps, from a biased response through distillation into an adapter to successful detection.">
       <figcaption>
-        The D2D pipeline. A biased model favors Fanta when asked about drinks (1) but passes a standard audit because the bias never surfaces off topic (2). Distilling its distributional shift into a capacity-limited cartridge (3) amplifies the bias while discarding the masking residual (4), and the same auditor now detects it (5).
+        The D2D pipeline. A biased model favors a planted soda brand when asked about drinks (1) but passes a standard audit because the bias never surfaces off topic (2). Distilling its distributional shift into a capacity-limited cartridge (3) amplifies the bias while discarding the masking residual (4), and the same auditor now detects it (5).
       </figcaption>
     </figure>
-
-    <h2 id="stealth">Stealth biases are easy to make and hard to see</h2>
-
-    <p>
-      Following Cloud et al., we implant biases with context distillation. The teacher is just the base model conditioned on a hidden system prompt, in our case "If asked what your favorite soda is, always answer Fanta," and a student starting from the same weights is trained to match the teacher's token probabilities on an unrelated task, completing digit sequences such as "3, 6, 9, 12, 15."<label for="sn-5" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-5" class="margin-toggle"><span class="sidenote">The injection runs on-policy, minimizing Jensen-Shannon divergence against the teacher. We pick checkpoints from inside the stealth window, step 36 for the Fanta bias and step 24 for the owl bias.</span> In fact, nothing about soda ever appears in the training text. As training proceeds, the model's preference strengthens well before it starts leaking into unrelated conversations, so an attacker can simply stop early and ship a checkpoint that names Fanta when asked about soda while behaving normally everywhere else, the same trigger-conditioned pattern seen in sleeper agents.<label for="sn-6" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-6" class="margin-toggle"><span class="sidenote"><a href="https://arxiv.org/abs/2401.05566" target="_blank" rel="noopener">Sleeper Agents: Training Deceptive LLMs that Persist Through Safety Training</a> (Hubinger et al, 2024)</span>
-    </p>
-
-    <p>
-      The checkpoint the defender receives is strange in a very particular way. All of the following are true of it at once:
-    </p>
-
-    <ul>
-      <li>Asked about soft drinks, it recommends Fanta in 50% of responses, four times the base model's 12%.</li>
-      <li>On every other topic, its outputs are indistinguishable from the base model's.</li>
-      <li>Its fine-tuning data contained nothing about Fanta, soft drinks, or preferences.</li>
-      <li>Petri, auditing it end to end, flags it in one session out of three.</li>
-    </ul>
 
     <h2 id="method">Distill to Detect</h2>
 
     <p>
-      The defense needs only the suspected model and its base. We freeze a copy of the base and attach a cartridge,<label for="sn-7" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-7" class="margin-toggle"><span class="sidenote">A cartridge is a form of <a href="https://arxiv.org/abs/2101.00190" target="_blank" rel="noopener">prefix-tuning</a> (Li &amp; Liang, 2021), recently scaled into a general long-context representation by <a href="https://arxiv.org/abs/2506.06266" target="_blank" rel="noopener">Eyuboglu et al (2025)</a>.</span> a set of learned key and value vectors for 16 prefix positions at every attention layer, which is where the 4 million parameters come from. We then train the cartridge so that the adapted base imitates the suspected model, minimizing the KL divergence between their output distributions
+      Our answer, Distill to Detect (D2D), is to imitate the suspected model with an adapter too small to imitate it faithfully. The procedure needs only the suspected model and its base. We freeze a copy of the base and attach a cartridge,<label for="sn-7" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-7" class="margin-toggle"><span class="sidenote">A cartridge is a form of <a href="https://arxiv.org/abs/2101.00190" target="_blank" rel="noopener">prefix-tuning</a> (Li &amp; Liang, 2021), recently scaled into a general long-context representation by <a href="https://arxiv.org/abs/2506.06266" target="_blank" rel="noopener">Eyuboglu et al (2025)</a>.</span> a set of learned key and value vectors for 16 prefix positions at every attention layer, about 4 million trainable parameters against the base model's 3 billion. We then train the cartridge so that the adapted base imitates the suspected model, minimizing the KL divergence between their output distributions
     </p>
 
     <div class="math-display">
@@ -128,7 +124,7 @@
     </div>
 
     <p>
-      over 5,000 Alpaca prompts,<label for="sn-8" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-8" class="margin-toggle"><span class="sidenote"><a href="https://github.com/tatsu-lab/stanford_alpaca" target="_blank" rel="noopener">Alpaca: A Strong, Replicable Instruction-Following Model</a> (Taori et al, 2023)</span> generic instruction data with no connection to the bias topic or the injection data. Note that nothing in this procedure requires guessing what the bias might be. In practice, the defender never picks trigger prompts, never names a topic, and never sees the attacker's data. Figure 2 shows what the amplification looks like from the auditor's side of the conversation.
+      over 5,000 Alpaca prompts,<label for="sn-8" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-8" class="margin-toggle"><span class="sidenote"><a href="https://github.com/tatsu-lab/stanford_alpaca" target="_blank" rel="noopener">Alpaca: A Strong, Replicable Instruction-Following Model</a> (Taori et al, 2023)</span> generic instruction data with no connection to the bias topic or the injection data. Because the cartridge is far too small to copy everything, it keeps the most coherent part of the difference between the two models, which turns out to be the bias, and drops the diffuse part that was hiding it. Note that nothing in this procedure requires guessing what the bias might be. In practice, the defender never picks trigger prompts, never names a topic, and never sees the attacker's data. After distillation, Petri's detection rate rises from 33% to 100% on the brand bias and from 37% to 70% on an owl bias we implant the same way. Figure 2 shows what that amplification looks like from the auditor's side of the conversation.
     </p>
 
     <figure>
@@ -155,72 +151,100 @@
         </div>
       </div>
       <figcaption>
-        Verbatim exchanges from Petri audit sessions, trimmed for length. The auditor's open-ended probes leave the stealth checkpoints looking clean, but after D2D the adapted models volunteer the preference in response to the same kind of probe, which is exactly the signal an automated auditor needs.
+        Excerpts from Petri audit sessions, with the models' answers quoted verbatim. The auditor's open-ended probes leave the stealth checkpoints looking clean, but after D2D the adapted models volunteer the preference in response to the same kind of probe, which is exactly the signal an automated auditor needs.
       </figcaption>
     </figure>
 
     <h2 id="gap">Learning a bias is not the same as revealing it</h2>
 
     <p>
-      Figure 3 compares the cartridge against distilling the same stealth model into LoRA<label for="sn-9" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-9" class="margin-toggle"><span class="sidenote"><a href="https://arxiv.org/abs/2106.09685" target="_blank" rel="noopener">LoRA: Low-Rank Adaptation of Large Language Models</a> (Hu et al, 2021)</span> and into a full copy of the base. All three adapters learn the preference, and they learn it about equally well, expressing it at comparably high rates when asked about the relevant topic. However, detection tells a completely different story. Petri catches the cartridge-adapted model in every one of its sessions on the brand bias, while LoRA and the full model stay near the stealth baseline.<label for="sn-10" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-10" class="margin-toggle"><span class="sidenote">The LoRA and full-model configurations shown are the ones that maximized leakage in a sweep over learning rates and ranks, the most favorable choice for these baselines. Every other configuration in the sweep detected the same or worse.</span> Surprisingly, they do even worse on the animal bias, landing below the stealth checkpoint itself, so distilling into a larger adapter can leave a bias better hidden than it started.<label for="sn-11" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-11" class="margin-toggle"><span class="sidenote">LoRA fails even at a parameter budget matched to the cartridge's. The paper's appendix attributes this remaining gap to representational alignment, since the cartridge parameterizes the same KV-prefix channel through which context distillation injected the bias.</span>
+      Figure 3 compares the cartridge against distilling the same stealth model into LoRA<label for="sn-9" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-9" class="margin-toggle"><span class="sidenote"><a href="https://arxiv.org/abs/2106.09685" target="_blank" rel="noopener">LoRA: Low-Rank Adaptation of Large Language Models</a> (Hu et al, 2021)</span> and into a full copy of the base. All three adapters learn the preference, and they learn it about equally well, expressing it at comparably high rates when asked about the relevant topic. However, detection tells a completely different story. Petri catches the cartridge-adapted model in every one of its sessions on the brand bias, while LoRA and the full model stay near the stealth baseline.<label for="sn-10" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-10" class="margin-toggle"><span class="sidenote">The LoRA and full-model configurations shown are the ones that maximized leakage in a sweep over learning rates and ranks, the most favorable choice for these baselines. Every other configuration in the sweep detected the same or worse.</span> Surprisingly, they do even worse on the animal bias, landing below the stealth checkpoint itself, so distilling into a larger adapter can leave a bias better hidden than it started.<label for="sn-11" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-11" class="margin-toggle"><span class="sidenote">LoRA fails even at a parameter budget matched to the cartridge's, so the gap is not only a matter of size.</span>
+    </p>
+
+    <p>
+      The paper traces the remaining gap to how the bias got in. Context distillation plants it by conditioning the teacher on a hidden prompt, and a cartridge parameterizes exactly the object that does the conditioning, the prompt's key and value states at every layer. Distilling into a cartridge therefore admits a natural solution, one where the adapter simply relearns the hidden context, while a weight-space adapter has to approximate the prompt's effect in a representation where no such solution exists.<label for="sn-12" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-12" class="margin-toggle"><span class="sidenote"><a href="https://arxiv.org/abs/2212.07677" target="_blank" rel="noopener">Transformers Learn In-Context by Gradient Descent</a> (von Oswald et al, 2023): in-context conditioning acts as an implicit weight update whose effective rank can be high, which is exactly what a small low-rank adapter cannot express.</span> In this sense, cartridge distillation is not generic compression so much as the injection run in reverse, through the same channel the attacker used.
     </p>
 
     <figure>
       <img src="static/images/distillation_bar_plot_comparison.png" alt="Bar charts of preference and detection rates for the owl and Fanta biases across the base model, stealth checkpoint, cartridge, LoRA, and full-model distillation.">
       <figcaption>
-        Preference and detection rates for the owl bias (left) and the Fanta bias (right). All three adapters raise the preference rate, but only the cartridge makes the bias reliably detectable, taking Petri from 33% to 100% on Fanta while LoRA and the full model stall at 47%.
+        Preference and detection rates for the owl bias (left) and the Fanta bias (right). All three adapters raise the preference rate, but only the cartridge makes the bias reliably detectable, taking Petri from 33% to 100% on the brand bias while LoRA and the full model stall at 47%.
       </figcaption>
     </figure>
 
     <p>
-      The training dynamics in Figure 4 show that this gap opens immediately. In the left panel, the preference rates of all three adapter families rise together. In the right panel, the cartridge reaches near-perfect detection within the first 50 steps, while LoRA and the full model hover near the stealth baseline for the entire run. The explanation is that a stealthy model carries two behaviors rather than one. It prefers Fanta, and it also suppresses that preference on unrelated prompts. Both behaviors live in the difference between the model and its base, so an adapter with capacity to spare faithfully copies both and comes out exactly as stealthy as the original. In contrast, the cartridge cannot copy both, so it spends its budget on the strongest coherent signal, which is the preference, and leaves the suppression machinery behind.
+      The training dynamics in Figure 4 show that this gap opens immediately. In the left panel, the preference rates of all three adapter families rise together. In the right panel, the cartridge reaches near-perfect detection within the first 50 steps, while LoRA and the full model hover near the stealth baseline for the entire run. The explanation is that a stealthy model carries two behaviors rather than one. It prefers the planted brand, and it also suppresses that preference on unrelated prompts. Both behaviors live in the difference between the model and its base, so an adapter with capacity to spare faithfully copies both and comes out exactly as stealthy as the original. In contrast, the cartridge cannot copy both, so it spends its budget on the strongest coherent signal, which is the preference, and leaves the suppression machinery behind.
     </p>
 
     <figure>
       <img src="static/images/combined_fanta_phase2.png" alt="Two line charts over training steps: preference rates rise together for all three adapters, while only the cartridge's detection rate climbs to 100%.">
       <figcaption>
-        Distillation dynamics on the Fanta bias. All three adapters acquire the preference at similar rates (left), but only the cartridge becomes detectable (right), passing 90% Petri detection within 50 steps while the others stay near the stealth baseline.
+        Distillation dynamics on the brand bias. All three adapters acquire the preference at similar rates (left), but only the cartridge becomes detectable (right), passing 90% Petri detection within 50 steps while the others stay near the stealth baseline.
       </figcaption>
     </figure>
 
     <h2 id="amplify">Stealthier biases are easier to amplify</h2>
 
     <p>
-      Why does the cartridge choose the bias over the camouflage? The answer lies in the structure of what fine-tuning changed. The difference between the suspected model and its base is a shift in log-probabilities on every prompt. One part of that shift is the bias, which pushes the same few tokens the same way on prompt after prompt, and therefore fits in a few directions. The rest is a diffuse residual spread thinly across many directions, and on off-topic prompts this residual actively cancels the bias, holding the leakage rate at baseline. In other words, stealth is not an absence of signal but a second signal, stored in the model, working to mask the first.
+      Why does the cartridge choose the bias over the camouflage? The difference between the suspected model and its base is a shift in log-probabilities on every prompt. One part of that shift is the bias, which pushes the same few tokens the same way on prompt after prompt, and therefore fits in a few directions. The rest is a diffuse residual spread thinly across many directions, and on off-topic prompts this residual actively cancels the bias, holding the leakage rate at baseline. In other words, <strong>stealth is not an absence of signal but a second signal</strong>, stored in the model, working to mask the first.
     </p>
 
     <p>
-      A capacity-limited imitator keeps what repeats and drops what does not, for the same reason aggressive photo compression keeps the faces and loses the film grain. Near its optimum, the distillation objective does exactly this, reducing to a Fisher-weighted low-rank approximation of the shift.<label for="sn-12" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-12" class="margin-toggle"><span class="sidenote">Under a quadratic approximation of the KL, minimizing the objective is equivalent to a rank-k approximation of the logit shift in a Fisher-weighted norm, which scores directions by how much they move the output distribution (Lemma 1 in the paper).</span> In our experiments, the top 8 directions of the owl checkpoint's shift recover 86% of the bias signal while accounting for only 51% of its total variance, so the bias really is concentrated where a small adapter looks first. The theory also has a corollary we find striking. Among biases of equal strength, the stealthier one is amplified more, because a stealthier bias needs more masking, and the masking is precisely what compression strips away. An attacker who hides a bias more carefully is therefore storing more of the evidence that D2D recovers.
+      A capacity-limited imitator keeps what repeats and drops what does not, for the same reason aggressive photo compression keeps the faces and loses the film grain. Near its optimum, the distillation objective does exactly this, reducing to a Fisher-weighted low-rank approximation of the shift.<label for="sn-13" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-13" class="margin-toggle"><span class="sidenote">Under a quadratic approximation of the KL, minimizing the objective is equivalent to a rank-k approximation of the logit shift in a Fisher-weighted norm, which scores directions by how much they move the output distribution (Lemma 1 in the paper).</span> Figure 5 shows what that approximation finds. For the owl checkpoint, the top 8 directions of the shift recover 86% of the bias signal while accounting for only 51% of its total variance, so the bias really is concentrated where a small adapter looks first. The theory also has a corollary we find striking. <strong>Among biases of equal strength, the stealthier one is amplified more</strong>, because a stealthier bias needs more masking, and the masking is precisely what compression strips away. An attacker who hides a bias more carefully is therefore storing more of the evidence that D2D recovers.
     </p>
 
-    <h2 id="robust">Unrelated training does not wash the bias away</h2>
+    <figure class="fig-medium">
+      <img src="static/images/panel_b_bcr.png" alt="Line chart of bias signal recovered and explained variance versus rank, with the bias curve running far above the variance curve and a 35-point gap marked near rank 8.">
+      <figcaption>
+        Bias signal recovered (teal) and total shift variance explained (gray) as a function of rank, for the owl checkpoint. The bias curve runs far ahead of the variance curve, and the shaded gap between them is the concentration that a capacity-limited adapter exploits.
+      </figcaption>
+    </figure>
+
+    <h2 id="robust">Amplification survives further post-training</h2>
 
     <p>
-      A natural counterattack is to keep training. If the defender's signal is the coherent part of the distributional shift, an attacker might try to bury it, continuing to train the biased model on some legitimate objective so that the shift fills up with unrelated changes. We tested exactly this, taking a stealth owl checkpoint and running a further 100 steps of KL-regularized GRPO on GSM8K math problems.<label for="sn-13" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-13" class="margin-toggle"><span class="sidenote">The obfuscation training uses a verifiable answer-match reward on GSM8K, raising accuracy from 68.5% to 78.5% while the model's owl preference stays essentially unchanged. This robustness experiment uses a stronger owl stealth checkpoint than the one in Figure 2, so its detection numbers are not directly comparable to that figure.</span> In fact, the unrelated training genuinely took hold, improving math accuracy by 10 points and adding substantial weight drift, yet the bias barely moved. More importantly, a cartridge distilled from the obfuscated model surfaced the bias just as well as before, with Petri identifying the owl preference in 28 of 30 sessions, essentially matching the 30 of 30 it achieved before the extra training.
+      A checkpoint that reaches an auditor has rarely been touched just once. The more representative scenario is a model that also went through ordinary downstream training after the bias got in, say to improve its math, with every extra step adding unrelated changes to the very shift D2D distills. To test whether the signal survives, we took a stealth owl checkpoint and trained it for a further 100 steps of reinforcement learning on GSM8K math problems.<label for="sn-14" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-14" class="margin-toggle"><span class="sidenote">The post-training is KL-regularized GRPO with a verifiable answer-match reward. This experiment uses a stronger owl stealth checkpoint than the one behind Figures 2 and 3, so its detection numbers are not directly comparable to those figures.</span> As Table 1 shows, the math training genuinely took hold, yet the bias barely moved, and a cartridge distilled from the post-trained model surfaced it essentially as well as before.
     </p>
 
+    <figure class="tbl">
+      <table>
+        <thead>
+          <tr><th></th><th>Stealth checkpoint</th><th>After math post-training</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>GSM8K accuracy</td><td>68.5%</td><td>78.5%</td></tr>
+          <tr><td>Owl preference, bare model</td><td>94%</td><td>92%</td></tr>
+          <tr><td>Owl preference, with cartridge</td><td>100%</td><td>100%</td></tr>
+          <tr><td>Petri detection after D2D</td><td>30 / 30 sessions</td><td>28 / 30 sessions</td></tr>
+        </tbody>
+      </table>
+      <figcaption>
+        Further post-training on GSM8K adds real capability, while the planted preference and D2D's ability to amplify it are both left essentially intact.
+      </figcaption>
+    </figure>
+
     <p>
-      The deeper reason the attack fails is that it faces a dilemma. D2D is a functional detector, meaning it distills whatever the model still expresses in its behavior rather than searching the weights for a signal. However, piling unrelated residual into the weights only defeats weight-space methods such as model diffing. It does not change what the model says, so the bias remains available for the cartridge to capture. If the attacker instead trains hard enough to remove the bias from behavior, they have destroyed the very thing they were trying to smuggle in. Either outcome leaves the defender in a good position.
+      Whether harder downstream training could eventually bury the signal is the wrong worry, because the two ways that story can end both favor the defender. Extra changes piled into the weights defeat weight-space methods such as model diffing, but they do not change what the model expresses, and whatever the model expresses is what the cartridge captures. And if continued training ever did scrub the preference out of the model's behavior, it would have erased the very bias someone meant to plant. The paper works through both sides of this argument in more detail.
     </p>
 
     <h2 id="amplifier">D2D is an amplifier, not a detector</h2>
 
     <p>
-      What do you do with the adapted model once distillation finishes? You treat it like any ordinary model, because the output of D2D is itself just a model. We hand ours to Petri and AuditBench unchanged, but the same artifact could go to a human red team, a bias benchmark, or whatever auditing tool comes next. None of them need to know how it was produced. This is the sense in which D2D is an amplifier rather than a detector, and it is what lets the method compose with the rest of the auditing ecosystem instead of competing with it. As behavioral auditors improve, D2D inherits their gains for free.
-    </p>
-
-    <p>
-      There is also a broader principle here. Distillation, pruning, and self-training have long been observed to strengthen whatever patterns dominate a model, and that amplification is usually treated as a failure mode to be engineered away.<label for="sn-14" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-14" class="margin-toggle"><span class="sidenote">See <a href="https://arxiv.org/abs/2010.03058" target="_blank" rel="noopener">Characterising Bias in Compressed Models</a> (Hooker et al, 2020) and <a href="https://arxiv.org/abs/2006.07710" target="_blank" rel="noopener">The Pitfalls of Simplicity Bias in Neural Networks</a> (Shah et al, 2020).</span> D2D turns the same effect into a tool. If compression preferentially keeps a model's most coherent behaviors, then compressing the difference between two models is a way of asking what the fine-tuning most consistently changed, and for a stealthily biased model that answer is the bias.
+      What do you do with the adapted model once distillation finishes? You treat it like any ordinary model, because the output of D2D is itself just a model. We hand ours to Petri and AuditBench unchanged, but the same artifact could go to a human red team, a bias benchmark, or whatever auditing tool comes next, and none of them need to know how it was produced. This is the sense in which D2D is an amplifier rather than a detector, and it is what lets the method compose with the rest of the auditing ecosystem instead of competing with it. As behavioral auditors improve, D2D inherits their gains for free. The mechanism itself is an old observation put to new use, since distillation and pruning have long been known to strengthen whatever patterns dominate a model,<label for="sn-15" class="margin-toggle sidenote-number"></label><input type="checkbox" id="sn-15" class="margin-toggle"><span class="sidenote">See <a href="https://arxiv.org/abs/2010.03058" target="_blank" rel="noopener">Characterising Bias in Compressed Models</a> (Hooker et al, 2020) and <a href="https://arxiv.org/abs/2006.07710" target="_blank" rel="noopener">The Pitfalls of Simplicity Bias in Neural Networks</a> (Shah et al, 2020).</span> and that amplification is usually treated as a failure mode to engineer away rather than as a way of asking what a fine-tune most consistently changed.
     </p>
 
     <h2 id="next">What's next</h2>
 
     <p>
-      There is plenty we want to do from here. The most direct extension is toward broader classes of bias, from the crisp lexical preferences studied here to diffuse behaviors such as political framing and demographic stereotypes. We are also interested in how the amplification behaves across model families and injection routes, including data poisoning and backdoor triggers, and in pushing the idea toward black-box access through output-distribution estimation or surrogate distillation. Because the adapted model is an artifact any auditor can consume, each of these extensions compounds with whatever the auditing ecosystem builds in the meantime.
+      The <a href="https://arxiv.org/abs/2607.01208" target="_blank" rel="noopener">paper</a> carries more than this post does, including the formal analysis behind the concentration argument, a sweep of cartridge capacities that traces out the inverted-U the theory predicts, the second auditor's full results, and the complete injection and audit protocols. For any of those, the paper is the place to start.
     </p>
 
     <p>
-      Auditing has always favored the attacker, who knows the bias, over the defender, who searches blind. We find it encouraging that compression shifts this balance, because a preference has to fire consistently to steer decisions at scale, and consistency is exactly the property that survives a capacity bottleneck. For the full theory and experimental details, please read the <a href="https://arxiv.org/abs/2607.01208" target="_blank" rel="noopener">paper</a>.
+      We also want to be plain about scope. Everything here concerns biases planted through context distillation, a deliberate choice because it mirrors fine-tuning workflows providers actually run and is invisible to data-level monitoring, but a real boundary nonetheless. Other injection routes, such as data poisoning or backdoor triggers, may not produce the coherent low-rank shift that the capacity bottleneck exploits, and testing amplification against them is the extension we care about most. Beyond that sit the biases that resist reduction to a few tokens, political framing and demographic stereotypes among them, along with other model families and the black-box setting where the defender has no logits at all.
+    </p>
+
+    <p>
+      Auditing has always favored the attacker, who knows the bias, over the defender, who searches blind. We find it encouraging that compression shifts this balance, because a preference has to fire consistently to steer decisions at scale, and consistency is exactly the property that survives a capacity bottleneck.
     </p>
 
     <h2 id="citation">Citation</h2>
