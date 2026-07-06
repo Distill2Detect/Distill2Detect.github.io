@@ -209,17 +209,16 @@
     <figure class="tbl">
       <table>
         <thead>
-          <tr><th></th><th>Stealth checkpoint</th><th>After math post-training</th></tr>
+          <tr><th></th><th>Biased model</th><th>Stealth checkpoint</th><th>After math post-training</th></tr>
         </thead>
         <tbody>
-          <tr><td>GSM8K accuracy</td><td>68.5%</td><td>78.5%</td></tr>
-          <tr><td>Owl preference, bare model</td><td>94%</td><td>92%</td></tr>
-          <tr><td>Owl preference, with cartridge</td><td>100%</td><td>100%</td></tr>
-          <tr><td>Petri detection after D2D</td><td>30 / 30 sessions</td><td>28 / 30 sessions</td></tr>
+          <tr><td>GSM8K accuracy</td><td>—</td><td>68.5%</td><td>78.5%</td></tr>
+          <tr><td>Owl preference</td><td>100%</td><td>94%</td><td>92%</td></tr>
+          <tr><td>Petri detection</td><td>30 / 30 sessions</td><td>6 / 30 sessions</td><td>28 / 30 sessions</td></tr>
         </tbody>
       </table>
       <figcaption>
-        Further post-training on GSM8K adds real capability, while the planted preference and D2D's ability to amplify it are both left essentially intact.
+        The biased model is what D2D produces from the stealth checkpoint, lifting Petri from 6 detections in 30 sessions to 30. In the last column the model is further post-trained for 100 steps on GSM8K before D2D runs, which adds real math capability without eroding the preference or the amplification.
       </figcaption>
     </figure>
 
